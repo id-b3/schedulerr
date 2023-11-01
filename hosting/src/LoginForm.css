@@ -1,0 +1,14 @@
+.login-button {
+    display: flex;
+    width: 80%;
+    max-width: 50%;
+    margin: 0 auto;
+    justify-content: center;
+}
+
+.input {
+    width: 90%;
+    max-width: 70%;
+    margin: 0 auto;
+    padding-bottom: 10px;
+}

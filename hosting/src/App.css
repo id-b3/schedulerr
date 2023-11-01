@@ -1,0 +1,17 @@
+.page-header {
+  display: flex;
+  width: 80%;
+  max-width: 50%;
+  margin: 0 auto;
+  justify-content: center;
+  color: #a9a9a9;
+}
+
+.App {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #282c34;
+}
