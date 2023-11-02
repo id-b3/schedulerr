@@ -1,19 +1,21 @@
-import React from 'react';
-import LoginForm from './LoginForm.tsx';
-import Container from 'react-bootstrap/Container';
-import './App.css';
+import Layout from './Layout.tsx';
+import Login from './Login.tsx';
+import Signup from './Signup.tsx';
+import Profile from './Profile.tsx';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 function App() {
-        return (
-        <div className="App">
-        <Container>
-            <div className="page-header">
-                <h1> Schedul&#128075;!</h1>
-            </div>
-        </Container>
-            <LoginForm />
-        </div>
-        );
-    }
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path = "/" element = {<Layout />}>
+                    <Route index element = {<Login />} />
+                    <Route path = "/signup" element = {<Signup />} />
+                    <Route path = "/profile" element = {<Profile />} />
+                </Route>
+            </Routes>
+        </BrowserRouter>
+    );
+}
 
 export default App;

@@ -5,14 +5,23 @@ import InputGroup from 'react-bootstrap/InputGroup'
 import Button from 'react-bootstrap/Button'
 import Container from 'react-bootstrap/Container'
 
+import { getAuth, connectAuthEmulator, signInWithEmailAndPassword } from 'firebase/auth';
+
 function LoginForm() {
+
+    connectAuthEmulator(auth, 'http://localhost:9099');
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         console.log("Email: " + email);
         console.log("Password: " + password);
+        try{
+            await signInWithEmailAndPassword(auth, email, password)
+        } catch (error) {
+            console.log(error)
+        }
     }
 
     return (
