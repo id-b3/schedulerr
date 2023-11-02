@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { auth } from "./Firebase.tsx";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 
 const Signup = () => {
     const navigate = useNavigate();
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -13,13 +14,22 @@ const Signup = () => {
     const signupWithUsernameAndPassword = async (e) => {
         e.preventDefault();
 
-        if (password === confirmPassword) {
+         if (password === confirmPassword) {
             try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                navigate("/");
-            } catch {
+                await createUserWithEmailAndPassword(auth, email, password).then((userCredential) => {
+                    updateProfile( userCredential.user, {
+                        displayName: username,
+                    }).then(() => {
+                        console.log("User profile updated successfully");
+                        navigate("/");
+                    }).catch((error) => {
+                        console.error("Error updating user profile:", error);
+                    });
+                });
+            } catch (error) {
+                console.error("Error creating user:", error);
                 setNotice("Sorry, something went wrong. Please try again.");
-            }     
+            }
         } else {
             setNotice("Passwords don't match. Please try again.");
         }
@@ -34,6 +44,10 @@ const Signup = () => {
                             { notice }    
                         </div>
                     }
+                    <div className = "form-floating mb-3">
+                        <input id = "signupUsername" type = "text" className = "form-control" placeholder = "Username" value = { username } onChange = { (e) => setUsername(e.target.value) }></input>
+                        <label htmlFor = "signupUsername" className = "form-label">Username</label>
+                    </div>
                     <div className = "form-floating mb-3">
                         <input id = "signupEmail" type = "email" className = "form-control" aria-describedby = "emailHelp" placeholder = "name@example.com" value = { email } onChange = { (e) => setEmail(e.target.value) }></input>
                         <label htmlFor = "signupEmail" className = "form-label">Enter an email address for your username</label>
