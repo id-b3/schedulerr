@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import CalendarHeatmap from 'react-calendar-heatmap';
 import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
+import { Modal, Button } from "react-bootstrap";
 import 'react-calendar-heatmap/dist/styles.css';
 import { getUserGroups } from "./UserUtils.tsx";
 import { getDatabase, get, ref, onValue, off } from "firebase/database";
@@ -15,8 +16,19 @@ function Schedulerr() {
     const [userGroups, setUserGroups] = useState([]);
       const [selectedGroup, setSelectedGroup] = useState(null);
       const [values, setValues] = useState([]);
+      const [players, setPlayers] = useState([]);
+          const [modalShow, setModalShow] = useState(false);
+    const [modalData, setModalData] = useState({ date: null, players: [] });
 
-      useEffect(() => {
+    const handleModalOpen = (value) => {
+        const clickedData = values.find((data) => data.date === value.date);
+        if (clickedData) {
+            setModalData({ date: value.date, players: clickedData.users, number: value.count });
+            setModalShow(true);
+        }
+    };
+
+    useEffect(() => {
         const fetchUserGroups = async () => {
           try {
             const userGroupsData = await getUserGroups(auth.currentUser.uid);
@@ -48,6 +60,7 @@ useEffect(() => {
             }
           });
           availableData.push({ date, users: availableUsers });
+          setPlayers(availableData);
         });
         const calculatedValues = calculateValues(availableData);
         setValues(calculatedValues);
@@ -90,21 +103,41 @@ console.log("Values: ", values);
   </Dropdown.Item>
 ))}
     </DropdownButton>
-        <CalendarHeatmap
-            startDate = { shiftDate(today, -1) }
-            endDate = { shiftDate(today, 27) }
-            values = { values }
-            showWeekdayLabels = { true }
-            showMonthLabels = { false }
-            horizontal = { false }
-            onClick={value => alert(`Players Available: ${value.count}`)}
-            classForValue={(value) => {
-                if (!value) {
-                    return 'color-empty';
-                }
+            <CalendarHeatmap
+                startDate={shiftDate(today, -1)}
+                endDate={shiftDate(today, 27)}
+                values={values}
+                showWeekdayLabels={true}
+                showMonthLabels={false}
+                horizontal={false}
+                onClick={handleModalOpen} // Call the function to open the modal
+                classForValue={(value) => {
+                    if (!value) {
+                        return 'color-empty';
+                    }
                     return `color-scale-${value.count}`;
-            }}
-        />
+                }}
+            />
+
+            <Modal show={modalShow} onHide={() => setModalShow(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Players Availability for {modalData.date}</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                <div className="container-fluid">
+                    <div className="row">
+                        <div className="text-center">
+                        <h5>Available Players: {modalData.number}</h5>
+                        </div>
+                    </div>
+                </div>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setModalShow(false)}>
+                        Close
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 }
