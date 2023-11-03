@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { db, auth } from "./Firebase.tsx";
+import { auth } from "./Firebase.tsx";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { ref, set } from "firebase/database";
+import { getDatabase, ref, set, update } from "firebase/database";
 import { Link, useNavigate } from "react-router-dom";
 import TimezoneSelect from "react-timezone-select";
 
@@ -12,7 +12,7 @@ const Signup = () => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [gamesGMd, setGamesGMd] = useState([]);
-    const [group, setGroup] = useState("");
+    const [groups, setGroups] = useState([]);
     const [timezone, setTimezone] = useState("");
     const [notice, setNotice] = useState("");
 
@@ -27,20 +27,43 @@ const Signup = () => {
         setGamesGMd(updatedGames);
     };
 
+    const handleAddGroup = () => {
+        const updatedGroups = [...groups, ""];
+        setGroups(updatedGroups);
+    };
+
+    const handleRemoveGroup = (index) => {
+        const updatedGroups = [...groups];
+        updatedGroups.splice(index, 1);
+        setGroups(updatedGroups);
+    };
+
     const signupWithUsernameAndPassword = async (e) => {
         e.preventDefault();
 
-         if (password === confirmPassword) {
+        if (password === confirmPassword) {
             try {
                 await createUserWithEmailAndPassword(auth, email, password).then((userCredential) => {
-                    set(ref(db, 'users/' + userCredential.user.uid), {
-                            gamesGMd: gamesGMd,
-                            timezone: timezone,
+                    const userUid = userCredential.user.uid;
+                    const userPath = 'users/' + userUid;
+                    const db = getDatabase();
+                    const updates = {};
+                    set(ref(db, userPath), {
+                        gamesGMd: gamesGMd,
+                        timezone: timezone,
+                        groups: groups.reduce((acc, group) => {
+                            acc[group] = true;
+                            return acc;
+                        }, {}),
                     });
-                    set(ref(db, 'groups/' + group + '/'), {
-                            members: [userCredential.user.uid]
-                        });
-                    updateProfile( userCredential.user, {
+                    groups.forEach((group) => {
+                        const groupPath = 'groups/' + group;
+                        updates[`${userPath}/groups/${group}`] = true;
+                        updates[`${groupPath}/members/${userUid}`] = true;
+                    });
+                    update(ref(db), updates);
+
+                    updateProfile(userCredential.user, {
                         displayName: username,
                     }).then(() => {
                         console.log("User profile updated successfully");
@@ -99,17 +122,27 @@ const Signup = () => {
                         ))}
                     </div>
                     <div className="form-floating mb-3">
-                        <input
-                            id="group"
-                            type="text"
-                            className="form-control"
-                            placeholder="Group"
-                            value={group}
-                            onChange={(e) => setGroup(e.target.value)}
-                        ></input>
-                        <label htmlFor="group" className="form-label">
-                            Group
-                        </label>
+                        <h5>Add gaming groups... 
+                        <button type="button" className="btn btn-outline-success" onClick={handleAddGroup}>
+                            +
+                        </button></h5>
+                        {groups.map((group, index) => (
+                            <div className="input-group mb-4" key={index}>
+                                <input
+                                    className="input-group-text"
+                                    type="text"
+                                    value={group}
+                                    onChange={(e) => {
+                                        const updatedGroups = [...groups];
+                                        updatedGroups[index] = e.target.value;
+                                        setGroups(updatedGroups);
+                                    }}
+                                />
+                                <button type="button" className="input-group-append btn btn-outline-danger" onClick={() => handleRemoveGame(index)}>
+                                    -
+                                </button>
+                            </div>
+                        ))}
                     </div>
                     <div className="form-floating mb-3">
                         <p>Timezone</p>

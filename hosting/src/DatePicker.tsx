@@ -3,6 +3,7 @@ import Flatpickr from "react-flatpickr";
 import "flatpickr/dist/themes/dark.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { auth } from "./Firebase.tsx";
+import { getDatabase, ref, update } from "firebase/database";
 
 function DatePicker() {
   const [selectedDates, setSelectedDates] = useState([]);
@@ -11,6 +12,10 @@ function DatePicker() {
 
   const handleDateChange = (dates) => {
     setSelectedDates(dates);
+    const db = getDatabase();
+    update(ref(db, 'users/' + auth.currentUser.uid + '/'), {
+            dates: dates,
+        });
   };
 
   return (
