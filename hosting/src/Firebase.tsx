@@ -24,4 +24,4 @@ if (location.hostname === "localhost") {
         connectDatabaseEmulator(db, "127.0.0.1", 9000);
 }
 
-export { db, auth };
+export { auth };
