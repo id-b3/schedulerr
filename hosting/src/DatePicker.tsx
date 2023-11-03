@@ -42,10 +42,30 @@ const handleDateChange = (dates) => {
   const db = getDatabase();
   const updates = {};
 
+  const set1 = new Set(dates);
+  const set2 = new Set(selectedDates);
+  console.log("Set1: ", set1);
+  console.log("Set2: ", set2);
+
+  if (set1.size < set2.size) {
+    const removedDates = [...selectedDates].filter((date) => !set1.has(date));
+    console.log("Removed dates: ", removedDates);
+
+    removedDates.forEach((date) => {
+      userGroups.forEach((group) => {
+        const dateOnly = new Date(date).toISOString().slice(0, 10);
+        const userRef = `groups/${group}/dates/${dateOnly}/${auth.currentUser.displayName}`;
+        updates[userRef] = false;
+      });
+    });
+  } else {
+    console.log("No dates removed");
+  }
+
   userGroups.forEach((group) => {
     console.log("Group: ", group);
     dates.forEach((date) => {
-        const dateOnly = new Date(date).toISOString().slice(0, 10);
+      const dateOnly = new Date(date).toISOString().slice(0, 10);
       const groupRef = `groups/${group}/dates/${dateOnly}`;
       console.log("Group ref: ", groupRef);
       const userRef = `groups/${group}/dates/${dateOnly}/${auth.currentUser.displayName}`;
@@ -59,9 +79,9 @@ const handleDateChange = (dates) => {
     });
   });
 
-  setSelectedDates(dates);
+  setSelectedDates([...dates]); // Update the state with the new dates
   update(ref(db), updates);
-    // Update the 'dates' field for the current user separately
+  // Update the 'dates' field for the current user separately
   update(ref(db, `users/${auth.currentUser.uid}`), { dates: dates });
 };
 
