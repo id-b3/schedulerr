@@ -33,4 +33,19 @@ const getUserDates = async (userId) => {
             }
     };
 
-export { getUserGroups, getUserDates };
+const getUserTZ = async (userId) => {
+        try {
+            const db = getDatabase();
+            const userTZRef = ref(db, `users/${userId}/timezone`);
+            const userTZSnapshot = await get(userTZRef);
+            if (userTZSnapshot.val() != null) {
+                return userTZSnapshot.val();
+                } else {
+                        return [];
+                    }
+            } catch (error) {
+                console.error("Error fetching user timezone: ", error);
+            }
+    };
+
+export { getUserGroups, getUserDates, getUserTZ };

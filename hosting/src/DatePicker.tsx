@@ -10,20 +10,24 @@ function DatePicker() {
   const [selectedDates, setSelectedDates] = useState([]);
   const [defaultDates, setDefaultDates] = useState([]);
   const [userGroups, setUserGroups] = useState([]);
+  const [defaultDatesFetched, setDefaultDatesFetched] = useState(false);
 
   const calendarRef = useRef(null);
 
   useEffect(() => {
-          const fetchUserDates = async () => {
-                  try {
-                       const userDatesData = await getUserDates(auth.currentUser.uid);
-                       setDefaultDates(userDatesData);
-                       console.log("User dates: ", userDatesData);
-                      } catch (error) {
-                              console.error("Error fetching user dates: ", error);
-                          }
-              };
-      }, []);
+      const fetchUserDates = async () => {
+      try {
+           const userDatesData = await getUserDates(auth.currentUser.uid);
+           setDefaultDates(userDatesData);
+           console.log("User dates: ", userDatesData);
+          } catch (error) {
+                  console.error("Error fetching user dates: ", error);
+              }
+          };
+          if (!defaultDatesFetched){
+          fetchUserDates();
+          }
+      }, [defaultDatesFetched]);
 
   useEffect(() => {
     const fetchUserGroups = async () => {
@@ -44,17 +48,15 @@ const handleDateChange = (dates) => {
 
   const set1 = new Set(dates);
   const set2 = new Set(selectedDates);
-  console.log("Set1: ", set1);
-  console.log("Set2: ", set2);
 
   if (set1.size < set2.size) {
     const removedDates = [...selectedDates].filter((date) => !set1.has(date));
     console.log("Removed dates: ", removedDates);
 
     removedDates.forEach((date) => {
+        const dateStr = new Date(date).toDateString();
       userGroups.forEach((group) => {
-        const dateOnly = new Date(date).toISOString().slice(0, 10);
-        const userRef = `groups/${group}/dates/${dateOnly}/${auth.currentUser.displayName}`;
+        const userRef = `groups/${group}/dates/${dateStr}/${auth.currentUser.displayName}`;
         updates[userRef] = false;
       });
     });
@@ -63,12 +65,10 @@ const handleDateChange = (dates) => {
   }
 
   userGroups.forEach((group) => {
-    console.log("Group: ", group);
     dates.forEach((date) => {
-      const dateOnly = new Date(date).toISOString().slice(0, 10);
-      const groupRef = `groups/${group}/dates/${dateOnly}`;
-      console.log("Group ref: ", groupRef);
-      const userRef = `groups/${group}/dates/${dateOnly}/${auth.currentUser.displayName}`;
+        const dateStr = new Date(date).toDateString();
+      const groupRef = `groups/${group}/dates/${dateStr}`;
+      const userRef = `groups/${group}/dates/${dateStr}/${auth.currentUser.displayName}`;
       if (!selectedDates.includes(date)) {
         // If the date is added, add the user to availableUsers
         updates[userRef] = true;
@@ -85,6 +85,36 @@ const handleDateChange = (dates) => {
   update(ref(db, `users/${auth.currentUser.uid}`), { dates: dates });
 };
 
+  const setInitialDates = () => {
+    const convDate = defaultDates.map((date) => new Date(date).toISOString().slice(0, 10));
+    console.log("Converted dates: ", convDate);
+    if (calendarRef.current) {
+      calendarRef.current.flatpickr.setDate(convDate, true);
+    }
+  };
+
+useEffect(() => {
+  const setInitialDates = () => {
+    const convertedDates = defaultDates.map((date) => {
+      const dateObject = new Date(date);
+      // Check if the dateObject is valid
+      return dateObject instanceof Date && !isNaN(dateObject) ? dateObject : null;
+    });
+
+    console.log("Converted dates: ", convertedDates);
+
+    if (calendarRef.current && convertedDates.every((date) => date !== null)) {
+      calendarRef.current.flatpickr.setDate(convertedDates, true);
+    } else {
+      console.error("Error setting initial dates");
+    }
+  };
+
+  if (defaultDates.length > 0) {
+    setInitialDates();
+  }
+}, [defaultDates]);
+
   return (
     <div className="row justify-content-center">
       <h3 className="text-center">👇 Change Availability 👇</h3>
@@ -95,8 +125,9 @@ const handleDateChange = (dates) => {
             mode: "multiple",
             dateFormat: "Y-m-d",
             minDate: "today",
+            defaultHour: 12,
+            defaultMinute: 0,
             locale: { firstDayOfWeek: 1 },
-            defaultDate: defaultDates,
             onClose: (dates) => handleDateChange(dates),
           }}
         />
@@ -106,4 +137,3 @@ const handleDateChange = (dates) => {
 }
 
 export default DatePicker;
-
